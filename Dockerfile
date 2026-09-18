@@ -1,15 +1,21 @@
-FROM alpine:latest
+FROM ubuntu:latest
 
-# ដំឡើង dependencies ចាំបាច់ទាំងអស់
-RUN apk add --no-cache curl wget bash tzdata sqlite ca-certificates
+# កុំឱ្យវាសួរផ្ទាំង interactive ពេលកំពុងដំឡើង
+ENV DEBIAN_FRONTEND=noninteractive
 
-# ទាញយក script install របស់ 3X-UI និងរៀបចំដំណើរការដោយឆ្លងកាត់ការសួរបញ្ជាក់ (auto-accept)
-RUN wget -O /tmp/install.sh https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh && \
-    chmod +x /tmp/install.sh && \
-    yes | /tmp/install.sh && \
-    rm /tmp/install.sh
+# ដំឡើង dependencies ចាំបាច់នៅលើ Ubuntu
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    bash \
+    tzdata \
+    systemctl \
+    && rm -rf /var/lib/apt/lists/*
 
-# បើក Port សម្រាប់ Panel (Default: 2053) និង Port សម្រាប់ V2Ray
+# ទាញយក និងដំឡើង 3X-UI យ៉ាងរលូននៅលើ Ubuntu
+RUN bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) <<< "y"
+
+# បើក Port សម្រាប់ Panel (2053) និង Port V2Ray (10000)
 EXPOSE 2053 10000
 
 # ដំណើរការ 3X-UI panel
