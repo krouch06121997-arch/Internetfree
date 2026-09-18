@@ -1,24 +1,14 @@
 FROM alpine:latest
 
-RUN apk add --no-cache curl unzip python3 py3-pip && \
-    ARCH=$(uname -m) && \
-    if [ "$ARCH" = "x86_64" ]; then XRAY_ARCH="64"; \
-    elif [ "$ARCH" = "aarch64" ]; then XRAY_ARCH="arm64-v8a"; \
-    else XRAY_ARCH="64"; fi && \
-    curl -L -o /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-${XRAY_ARCH}.zip && \
-    unzip /tmp/xray.zip -d /usr/local/bin/ && \
-    rm /tmp/xray.zip
+# ដំឡើង dependencies ចាំបាច់
+RUN apk add --no-cache curl wget bash tzdata sqlite
 
-RUN pip3 install --no-cache-dir flask --break-system-packages
+# ទាញយក និងដំឡើង 3X-UI (Xray-ui Panel)
+RUN wget -N https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh && \
+    bash install.sh <<< "y"
 
-COPY config.json /etc/xray/config.json
-COPY app.py /app.py
+# បើក Port សម្រាប់ Panel (Default: 2053) និង Port សម្រាប់ V2Ray (ឧទាហរណ៍: 10000)
+EXPOSE 2053 10000
 
-EXPOSE 8080
-
-RUN echo '#!/bin/sh' > /start.sh && \
-    echo 'xray -config /etc/xray/config.json &' >> /start.sh && \
-    echo 'python3 /app.py' >> /start.sh && \
-    chmod +x /start.sh
-
-CMD ["/start.sh"]
+# ដំណើរការ 3X-UI panel
+CMD ["/usr/bin/xray-ui", "web"]
