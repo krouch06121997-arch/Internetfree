@@ -1,7 +1,7 @@
 FROM alpine:latest
 
-# ដំឡើង dependencies ចាំបាច់ និង Xray
-RUN apk add --no-cache curl unzip && \
+# ដំឡើង dependencies, Python3, pip និង Xray-core
+RUN apk add --no-cache curl unzip python3 py3-pip && \
     ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then XRAY_ARCH="64"; \
     elif [ "$ARCH" = "aarch64" ]; then XRAY_ARCH="arm64-v8a"; \
@@ -10,11 +10,20 @@ RUN apk add --no-cache curl unzip && \
     unzip /tmp/xray.zip -d /usr/local/bin/ && \
     rm /tmp/xray.zip
 
-# ចម្លង config.json ចូលទៅក្នុង container
-COPY config.json /etc/xray/config.json
+# ដំឡើង Flask សម្រាប់ Python Web App
+RUN pip3 install --no-cache-dir flask --break-system-packages
 
-# បើក Port តាមដែល Render កំណត់ (Render ប្រើប្រាស់ Environment Variable PORT)
+# ចម្លងឯកសារ Config និង App ចូលក្នុង Container
+COPY config.json /etc/xray/config.json
+COPY app.py /app.py
+
+# បើក Port ដែល Render ប្រើប្រាស់
 EXPOSE 8080
 
-# រត់សរសេរកម្មវិធី Xray
-CMD ["xray", "-config", "/etc/xray/config.json"]
+# បង្កើត script ដើម្បីរត់ទាំង Xray និង Python Flask ພ້ອມគ្នា
+RUN echo '#!/bin/sh' > /start.sh && \
+    echo 'xray -config /etc/xray/config.json &' >> /start.sh && \
+    echo 'python3 /app.py' >> /start.sh && \
+    chmod +x /start.sh
+
+CMD ["/start.sh"]
