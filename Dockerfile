@@ -1,20 +1,16 @@
-FROM ubuntu:latest
+FROM alpine:latest
 
-ENV DEBIAN_FRONTEND=noninteractive
+RUN apk add --no-cache curl unzip && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then XRAY_ARCH="64"; \
+    elif [ "$ARCH" = "aarch64" ]; then XRAY_ARCH="arm64-v8a"; \
+    else XRAY_ARCH="64"; fi && \
+    curl -L -o /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-${XRAY_ARCH}.zip && \
+    unzip /tmp/xray.zip -d /usr/local/bin/ && \
+    rm /tmp/xray.zip
 
-RUN apt-get update && apt-get install -y \
-    curl \
-    wget \
-    bash \
-    tzdata \
-    && rm -rf /var/lib/apt/lists/*
+COPY config.json /etc/xray/config.json
 
-# ទាញយក script មកទុក រួចប្រើប្រាស់ echo ដើម្បីឆ្លើយតបស្វ័យប្រវត្តិដោយសុវត្ថិភាព
-RUN wget -O /tmp/install.sh https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh && \
-    chmod +x /tmp/install.sh && \
-    printf "y\ny\ny\ny\ny\n" | /tmp/install.sh && \
-    rm /tmp/install.sh
+EXPOSE 10000
 
-EXPOSE 2053 10000
-
-CMD ["/usr/bin/xray-ui", "web"]
+CMD ["xray", "-config", "/etc/xray/config.json"]
