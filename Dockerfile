@@ -1,22 +1,20 @@
 FROM ubuntu:latest
 
-# កុំឱ្យវាសួរផ្ទាំង interactive ពេលកំពុងដំឡើង
 ENV DEBIAN_FRONTEND=noninteractive
 
-# ដំឡើង dependencies ចាំបាច់នៅលើ Ubuntu
 RUN apt-get update && apt-get install -y \
     curl \
     wget \
     bash \
     tzdata \
-    systemctl \
     && rm -rf /var/lib/apt/lists/*
 
-# ទាញយក និងដំឡើង 3X-UI យ៉ាងរលូននៅលើ Ubuntu
-RUN bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) <<< "y"
+# ទាញយក script មកទុក រួចប្រើប្រាស់ echo ដើម្បីឆ្លើយតបស្វ័យប្រវត្តិដោយសុវត្ថិភាព
+RUN wget -O /tmp/install.sh https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh && \
+    chmod +x /tmp/install.sh && \
+    printf "y\ny\ny\ny\ny\n" | /tmp/install.sh && \
+    rm /tmp/install.sh
 
-# បើក Port សម្រាប់ Panel (2053) និង Port V2Ray (10000)
 EXPOSE 2053 10000
 
-# ដំណើរការ 3X-UI panel
 CMD ["/usr/bin/xray-ui", "web"]
